@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+:root {
+    /* Color */
+    --bg: #0c0d11;
+    --bg-glow: #15121f;
+    --panel: #16181f;
+    --panel-border: #262a35;
+    --text: #eceef3;
+    --text-dim: #868b99;
+    --text-faint: #4c505c;
+
+    --accent: #7c6cff;
+    --accent-dim: #372f66;
+    --charge: #ff9d52;
+    --ready: #33e2a6;
+
+    /* Type */
+    --font-display: 'Space Mono', monospace;
+    --font-ui: 'Manrope', sans-serif;
+
+    /* Shape */
+    --radius-lg: 28px;
+    --radius-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 50% 15%, var(--bg-glow), transparent 55%),
+        var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    padding: 24px;
+    user-select: none;
+}
+
+.app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+/* ─── Mode selector ─────────────────────────────────────────────────── */
+
+.mode-select {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-pill);
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mode-btn svg { width: 16px; height: 16px; }
+
+.mode-btn:hover { color: var(--text); }
+
+.mode-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+/* ─── Scramble ──────────────────────────────────────────────────────── */
+
+.scramble-card {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.scramble-text {
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    word-spacing: 0.3em;
+    color: var(--text);
+}
+
+.icon-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--panel-border);
+    background: #1c1f28;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.icon-btn svg { width: 18px; height: 18px; }
+
+.icon-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+}
+
+.icon-btn:active { transform: scale(0.92); }
+
+/* ─── Timer dial ────────────────────────────────────────────────────── */
+
+.dial {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dial-ring {
+    position: absolute;
+    inset: 0;
+    transform: rotate(-90deg);
+}
+
+.dial-ring circle {
+    fill: none;
+    stroke-width: 4;
+}
+
+.dial-ring .track {
+    stroke: var(--panel-border);
+}
+
+.dial-ring .progress {
+    stroke: var(--charge);
+    stroke-linecap: round;
+    stroke-dasharray: 816.8;
+    stroke-dashoffset: 816.8;
+}
+
+.dial.charging .progress {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--charge-ms, 350ms) linear;
+}
+
+.dial.ready .progress { stroke: var(--ready); }
+
+.dial-face {
+    width: 232px;
+    height: 232px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.timer-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 52px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    transition: color 0.15s ease;
+}
+
+.dial.charging .timer-display { color: var(--charge); }
+.dial.ready .timer-display { color: var(--ready); }
+.dial.running .dial-face { background: #191c26; }
+
+@media (max-width: 420px) {
+    .dial { width: 240px; height: 240px; }
+    .dial-face { width: 196px; height: 196px; }
+    .timer-display { font-size: 42px; }
+    .scramble-text { font-size: 15px; }
+}

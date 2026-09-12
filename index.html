@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FTO Pizza</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <div class="mode-select" id="mode-select" role="tablist" aria-label="Timer mode"></div>
+
+    <div class="scramble-card">
+        <div class="scramble-text" id="scramble-text"></div>
+        <button class="icon-btn" id="new-scramble-btn" data-tip="New scramble" aria-label="New scramble"></button>
+    </div>
+
+    <div class="dial" id="dial" role="button" tabindex="0" aria-label="Hold to start timer">
+        <svg class="dial-ring" viewBox="0 0 280 280">
+            <circle class="track" cx="140" cy="140" r="130"></circle>
+            <circle class="progress" cx="140" cy="140" r="130"></circle>
+        </svg>
+        <div class="dial-face">
+            <div class="timer-display" id="timer-display">0.00</div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
