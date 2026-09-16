@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Post-RUduction Trainer</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="post-RUduction.css">
+</head>
+<body>
+
+<main class="app post-ru-app">
+  <div class="stack post-ru-stack">
+    <div class="trainer-head">
+      <a class="back-link" href="index.html" aria-label="Back to timer">FTO Pizza</a>
+      <div class="trainer-title">Post-RUduction</div>
+    </div>
+
+    <div class="scramble-card trainer-card">
+      <div class="scramble-text" id="scramble-text">Initializing solver...</div>
+      <button class="icon-btn" id="new-scramble-btn" data-tip="New scramble" aria-label="New scramble"></button>
+    </div>
+
+    <div class="dial" id="dial" role="button" tabindex="0" aria-label="Hold to start timer">
+      <svg class="dial-ring" viewBox="0 0 280 280">
+        <circle class="track" cx="140" cy="140" r="130"></circle>
+        <circle class="progress" cx="140" cy="140" r="130"></circle>
+      </svg>
+      <div class="dial-face">
+        <div class="timer-display" id="timer-display">0.00</div>
+      </div>
+    </div>
+
+    <div class="state-panel" aria-label="R and U affected state pieces">
+      <div class="state-row"><span>cp/co</span><code id="cp-indices"></code></div>
+      <div class="state-row"><span>ep</span><code id="ep-indices"></code></div>
+      <div class="state-row"><span>uf</span><code id="uf-indices"></code></div>
+      <div class="state-row"><span>rl</span><code id="rl-indices"></code></div>
+    </div>
+  </div>
+</main>
+
+<script>
+var DEBUG = false;
+var isInWorker = false;
+var $ = {
+  now: function() { return Date.now(); },
+  isArray: Array.isArray
+};
+</script>
+<script src="cstimer/isaac.js"></script>
+<script src="cstimer/mathlib.js"></script>
+<script src="cstimer/ftocta.js"></script>
+<script type="module" src="post-RUduction.js"></script>
+</body>
+</html>
