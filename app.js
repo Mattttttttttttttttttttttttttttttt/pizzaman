@@ -1,6 +1,6 @@
 import { ICONS } from './icons.js';
-import { generateRUFScramble } from './random-RUF.js';
-import { generateRUScramble } from './random-RU.js';
+import { generateRUduxScramble } from './RUdux.js';
+import { generatePostRUduxScramble } from './post-RUdux.js';
 import { fillSidebar, caseId } from './sidebar.js';
 import { loadSelection, saveSelection } from './selection.js';
 import { generateEPScramble, EPSidebar } from './EP.js';
@@ -10,8 +10,8 @@ import { generateEPScramble, EPSidebar } from './EP.js';
 // menu button appears, and `generate` receives the selected case ids.
 
 const MODES = {
-    RUF:   { label: 'R U F', icon: ICONS.puzzle, generate: generateRUFScramble },
-    RU:    { label: 'R U',   icon: ICONS.puzzle, generate: generateRUScramble },
+    RUF:   { label: 'R U F', icon: ICONS.puzzle, generate: generateRUduxScramble },
+    RU:    { label: 'R U',   icon: ICONS.puzzle, generate: generatePostRUduxScramble },
     EP: { label: 'EP', icon: ICONS.puzzle, generate: generateEPScramble, sidebar: EPSidebar },
 };
 
@@ -39,6 +39,7 @@ let phase         = 'idle'; // idle | holding | ready | running
 let timerStart    = null;
 let intervalId    = null;
 let holdTimeout   = null;
+let generating    = false;
 
 const sidebarConfigs = {}; // mode -> config object (or null), built once
 const selections     = {}; // mode -> Set of selected case ids
@@ -149,10 +150,29 @@ function setMode(newMode) {
     newScramble();
 }
 
-export function newScramble() {
+function setGenerating(active) {
+    generating = active;
+    newScrambleBtn.disabled = active;
+    dialEl.classList.toggle('disabled', active);
+}
+
+export async function newScramble() {
+    if (generating) return;
+    setGenerating(true);
+    scrambleTextEl.textContent = 'Generating...\n';
+
     const selected = selectionFor(mode);
-    scramble = selected ? MODES[mode].generate([...selected], scramble) : MODES[mode].generate(scramble);
-    renderScramble();
+    try {
+        scramble = selected
+            ? await MODES[mode].generate([...selected], scramble)
+            : await MODES[mode].generate(scramble);
+        renderScramble();
+    } catch (error) {
+        console.error(error);
+        scrambleTextEl.textContent = 'Generation failed. Try again.';
+    } finally {
+        setGenerating(false);
+    }
 }
 
 // ─── Timer state machine ────────────────────────────────────────────────────
@@ -163,7 +183,7 @@ function beginHold() {
         stopTimer();
         return;
     }
-    if (phase !== 'idle') return;
+    if (phase !== 'idle' || generating) return;
 
     setDialPhase('holding');
     holdTimeout = setTimeout(() => setDialPhase('ready'), startDelay);

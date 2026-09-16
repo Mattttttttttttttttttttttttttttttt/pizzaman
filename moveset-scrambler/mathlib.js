@@ -1,6 +1,8 @@
-"use strict";
+import isaac from './isaac.js';
 
-var mathlib = (function() {
+// Factory so `debug` can be supplied per instance; the default export
+// is a singleton with debug logging off.
+export function createMathlib(debug = false) {
 	var Cnk = [],
 		fact = [1];
 	for (var i = 0; i < 32; ++i) {
@@ -317,7 +319,7 @@ var mathlib = (function() {
 
 	function createMove(moveTable, size, doMove, N_MOVES) {
 		N_MOVES = N_MOVES || 6;
-		if ($.isArray(doMove)) {
+		if (Array.isArray(doMove)) {
 			var cord = new Coord(doMove[1], doMove[2], doMove[3]);
 			doMove = doMove[0];
 			for (var j = 0; j < N_MOVES; j++) {
@@ -354,7 +356,7 @@ var mathlib = (function() {
 				depthEnds.push(states.length);
 			}
 			if (i % 10000 == 9999) {
-				DEBUG && console.log(i, 'states scanned, tt=', +new Date - tt);
+				debug && console.log(i, 'states scanned, tt=', +new Date - tt);
 			}
 			var curState = states[i];
 			for (var m = 0; m < validMoves.length; m++) {
@@ -371,7 +373,7 @@ var mathlib = (function() {
 				moveTable[m][i] = hash2idx[newHash];
 			}
 		}
-		DEBUG && console.log('[move hash] ' + states.length + ' states generated, tt=', +new Date - tt, JSON.stringify(depthEnds));
+		debug && console.log('[move hash] ' + states.length + ' states generated, tt=', +new Date - tt, JSON.stringify(depthEnds));
 		return [moveTable, hash2idx];
 	}
 
@@ -922,7 +924,7 @@ var mathlib = (function() {
 	})();
 
 	function createPrun(prun, init, size, maxd, doMove, N_MOVES, N_POWER, N_INV) {
-		var isMoveTable = $.isArray(doMove);
+		var isMoveTable = Array.isArray(doMove);
 		N_MOVES = N_MOVES || 6;
 		N_POWER = N_POWER || 3;
 		N_INV = N_INV || 256;
@@ -930,7 +932,7 @@ var mathlib = (function() {
 		for (var i = 0, len = (size + 7) >>> 3; i < len; i++) {
 			prun[i] = -1;
 		}
-		if (!$.isArray(init)) {
+		if (!Array.isArray(init)) {
 			init = [init];
 		}
 		for (var i = 0; i < init.length; i++) {
@@ -978,7 +980,7 @@ var mathlib = (function() {
 			if (done == 0) {
 				break;
 			}
-			DEBUG && console.log('[prun]', done);
+			debug && console.log('[prun]', done);
 		}
 	}
 
@@ -991,7 +993,7 @@ var mathlib = (function() {
 		this.coords = [];
 		for (var i = 0; i < this.N_STATES; i++) {
 			var doMove = stateParams[i][1];
-			if ($.isArray(doMove)) {
+			if (Array.isArray(doMove)) {
 				this.coords[i] = new Coord(doMove[1], doMove[2], doMove[3]);
 			}
 		}
@@ -1111,7 +1113,7 @@ var mathlib = (function() {
 			if (this.ckmv[lm] >> axis & 1) {
 				continue;
 			}
-			var idx1 = $.isArray(idx) ? idx.slice() : idx;
+			var idx1 = Array.isArray(idx) ? idx.slice() : idx;
 			var pow = sol.length > depth ? sol[depth][1] : 0;
 			for (; pow < this.N_POWER; pow++) {
 				idx1 = this.doMove(idx1, axis, pow);
@@ -1157,7 +1159,7 @@ var mathlib = (function() {
 		targetDepth = targetDepth === undefined ? this.prunDepth + 1 : targetDepth;
 		for (var depth = this.prunDepth + 1; depth <= targetDepth; depth++) {
 			if (this.prevSize >= this.MAX_PRUN_SIZE) {
-				DEBUG && console.log('[gSolver] skipPrun', depth, this.prunTableSize);
+				debug && console.log('[gSolver] skipPrun', depth, this.prunTableSize);
 				break;
 			}
 			var t = +new Date;
@@ -1177,7 +1179,7 @@ var mathlib = (function() {
 				return;
 			}
 			this.prunDepth = depth;
-			DEBUG && console.log('[gSolver] updatePrun', depth, this.prunTableSize - this.prevSize, +new Date - t);
+			debug && console.log('[gSolver] updatePrun', depth, this.prunTableSize - this.prevSize, +new Date - t);
 			this.prevSize = this.prunTableSize;
 		}
 	};
@@ -1329,9 +1331,9 @@ var mathlib = (function() {
 		var seed = '' + new Date().getTime();
 		if (typeof crypto != 'undefined' && crypto.getRandomValues) {
 			seed = String.fromCharCode.apply(null, crypto.getRandomValues(new Uint16Array(256)));
-			DEBUG && console.log('[mathlib] use crypto seed', seed);
+			debug && console.log('[mathlib] use crypto seed', seed);
 		} else {
-			DEBUG && console.log('[mathlib] use datetime seed', seed);
+			debug && console.log('[mathlib] use datetime seed', seed);
 		}
 		setSeed(256, seed);
 
@@ -1499,4 +1501,7 @@ var mathlib = (function() {
 		getSeed: randGen.getSeed,
 		setSeed: randGen.setSeed
 	};
-})();
+}
+
+const mathlib = createMathlib();
+export default mathlib;

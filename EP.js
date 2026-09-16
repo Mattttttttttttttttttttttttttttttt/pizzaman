@@ -516,7 +516,7 @@ function refillBag(selected) {
     bagKey = keyFor(selected);
 }
 
-export function generateEPScramble(selected = EP_NAMES, prev) {
+export async function generateEPScramble(selected = EP_NAMES, prev) {
     if (selected.length === 0) return 'Select at least one case';
 
     if (bag.length === 0 || keyFor(selected) !== bagKey) {

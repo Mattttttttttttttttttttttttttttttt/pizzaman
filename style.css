@@ -14,6 +14,7 @@
     --accent-dim: #372f66;
     --charge: #ff9d52;
     --ready: #33e2a6;
+    --disabled: #2b2f3a;
 
     /* Type */
     --font-display: 'JetBrains Mono', ui-monospace, monospace;
@@ -281,6 +282,7 @@ body.sidebar-open .menu-btn { opacity: 0; pointer-events: none; }
 
 .scramble-card {
     width: 100%;
+    min-height: calc(17px * 1.7 * 2 + 22px * 2);
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: var(--radius-lg);
@@ -324,6 +326,15 @@ body.sidebar-open .menu-btn { opacity: 0; pointer-events: none; }
 }
 
 .icon-btn:active { transform: scale(0.92); }
+
+.icon-btn:disabled {
+    cursor: default;
+    color: var(--disabled);
+    border-color: var(--disabled);
+}
+
+.icon-btn:disabled:hover { color: var(--disabled); border-color: var(--disabled); }
+.icon-btn:disabled:active { transform: none; }
 
 /* ─── Timer dial ────────────────────────────────────────────────────── */
 
@@ -392,6 +403,15 @@ body.sidebar-open .menu-btn { opacity: 0; pointer-events: none; }
 .dial.ready .timer-display { color: var(--ready); }
 .dial.running .dial-face { background: #191c26; }
 
+/* Timer is unusable while a scramble is being generated. */
+.dial.disabled {
+    cursor: default;
+    pointer-events: none;
+}
+
+.dial.disabled .timer-display { color: var(--disabled); }
+.dial.disabled .dial-ring .track { stroke: var(--disabled); }
+
 /* Full-width overlay sidebar on small screens, still animated. */
 @media (max-width: 640px) {
     .sidebar {
@@ -413,4 +433,20 @@ body.sidebar-open .menu-btn { opacity: 0; pointer-events: none; }
     .dial-face { width: 196px; height: 196px; }
     .timer-display { font-size: 42px; }
     .scramble-text { font-size: 15px; }
+}
+
+
+:focus {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+/* Tight elements (case tiles, mode pills) read better with a closer ring. */
+.mode-btn:focus-visible,
+.case-tile:focus-visible {
+    outline-offset: -2px;
 }

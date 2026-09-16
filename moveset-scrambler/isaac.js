@@ -45,7 +45,7 @@
  */
 
 /* isaac module pattern */
-var isaac = (function(){
+const isaac = (function(){
 
 	/* private: internal states */
 	var m = Array(256), // internal memory
@@ -191,3 +191,5 @@ var isaac = (function(){
 		internals: internals
 	};
 })(); /* declare and execute */
+
+export default isaac;

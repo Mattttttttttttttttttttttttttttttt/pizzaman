@@ -1,5 +1,9 @@
-var ftosolver = (function() {
-	"use strict";
+import defaultMathlib from './mathlib.js';
+
+// Factory so `debug` can be supplied per instance; the default export
+// is a singleton with debug logging off. Shares the default mathlib
+// singleton unless a caller supplies its own.
+export function createFtosolver(debug = false, mathlib = defaultMathlib) {
 	//face-turning octahedron cube w/o identical pieces
 	function FtoCubie(cp, co, ep, uf, rl) {
 		this.cp = (cp && cp.slice()) || [0, 1, 2, 3, 4, 5];
@@ -376,7 +380,7 @@ var ftosolver = (function() {
 		p1rlMoves = mathlib.createMoveHash(fc.rl.slice(), phase1Moves, phase1CtrlHash, ftoPermMove.bind(null, 'rl'));
 		var N_P1EP = p1epMoves[0][0].length;
 		var N_P1RL = p1rlMoves[0][0].length;
-		DEBUG && console.log('p1ep len=' + N_P1EP + ' p1rl len=' + N_P1RL);
+		debug && console.log('p1ep len=' + N_P1EP + ' p1rl len=' + N_P1RL);
 
 		ckmv1 = genCkmv(phase1Moves);
 		var p1eprlPrun = [];
@@ -447,7 +451,7 @@ var ftosolver = (function() {
 			phase1Init();
 		}
 
-		var tt = $.now();
+		var tt = Date.now();
 		var idxs = phase1GenIdxs(fc);
 		var syms = idxs[1];
 		idxs = idxs[0];
@@ -460,7 +464,7 @@ var ftosolver = (function() {
 			return p1sols.length >= N_PHASE1_SOLS;
 		});
 
-		tt = $.now() - tt;
+		tt = Date.now() - tt;
 		for (var i = 0; i < p1sols.length; i++) {
 			p1sols[i].push(tt);
 		}
@@ -637,7 +641,7 @@ var ftosolver = (function() {
 			];
 		}, phase2Moves.length, 2, ckmv2);
 
-		if (1 != 1 && !isInWorker) {
+		if (1 != 1) {
 			// code for init p2necPrun
 			var p2ufPrun = [];
 			var N_P2CC = p2ccMoves[0][0].length;
@@ -663,7 +667,7 @@ var ftosolver = (function() {
 				return ufstd * N_P2CC + p2ccRecol[ufcol][cc];
 			}, phase2Moves.length, 2);
 
-			$.tryHashPrun = function(hashFunc) {
+			var tryHashPrun = function(hashFunc) {
 				var buc = new Map();
 				for (var i = 0; i < N_P2CC * N_P2UFSTD; i++) {
 					var hash = hashFunc(ufStd2Bit[~~(i / N_P2CC)], cc2Bit[i % N_P2CC]);
@@ -689,7 +693,7 @@ var ftosolver = (function() {
 				console.log('avg: ', csum / cnt);
 			}
 
-			$.tryHashPrun(function(ufbit, ccbit) {
+			tryHashPrun(function(ufbit, ccbit) {
 				var xors = ufbit ^ ccbit;
 				xors = (xors | xors >> 1) & 0x55555555;
 				return (mathlib.bitCount(xors & 0x3f) << 2 | mathlib.bitCount(xors & 0xc0c0c0)) * 7 + mathlib.bitCount(xors & 0x3f3f00);
@@ -701,7 +705,7 @@ var ftosolver = (function() {
 		if (!solv2) {
 			phase2Init();
 		}
-		var tt = $.now();
+		var tt = Date.now();
 		var idxs = [];
 		for (var i = 0; i < solvInfos.length; i++) {
 			idxs.push([
@@ -721,7 +725,7 @@ var ftosolver = (function() {
 			sol[i] = FtoCubie.symMulM[FtoCubie.symMulI[0][solvInfo[3]]][move >> 1] * 2 + (move & 1);
 			fc = FtoCubie.FtoMult(fc, FtoCubie.moveCube[move], null);
 		}
-		return [fc, sol, solvInfo[2], solvInfo[3], src, $.now() - tt];
+		return [fc, sol, solvInfo[2], solvInfo[3], src, Date.now() - tt];
 	}
 
 	var phase3Moves = [8, 10, 12, 14];
@@ -758,7 +762,7 @@ var ftosolver = (function() {
 			phase3Init();
 		}
 
-		var tt = $.now();
+		var tt = Date.now();
 		var p3epidx = p3epMoves[1][phase3EdgeHash(fc.ep)];
 		var p3ufidx = p3ufMoves[1][phase3CcufHash(fc)];
 
@@ -770,7 +774,7 @@ var ftosolver = (function() {
 
 			fc = FtoCubie.FtoMult(fc, FtoCubie.moveCube[move], null);
 		}
-		return [fc, sol, solvInfo[2], solvInfo[3], $.now() - tt];
+		return [fc, sol, solvInfo[2], solvInfo[3], Date.now() - tt];
 	}
 
 	// convert wide moves to face moves
@@ -818,11 +822,11 @@ var ftosolver = (function() {
 
 	FtoSolver.prototype.solveFto = function(fc, invSol) {
 		if (!solv1) {
-			var tt = $.now();
+			var tt = Date.now();
 			phase1Init();
 			phase2Init();
 			phase3Init();
-			DEBUG && console.log('[ftosolver] init time:', $.now() - tt);
+			debug && console.log('[ftosolver] init time:', Date.now() - tt);
 		}
 		var solvInfos = solvePhase1(fc);
 
@@ -860,13 +864,13 @@ var ftosolver = (function() {
 		var solution = solver.solveFto(solvInfo[0]);
 
 		var fc = solvInfo[0];
-		DEBUG && console.log('scrambled state\n', fc.toString(1));
+		debug && console.log('scrambled state\n', fc.toString(1));
 		fc = applyMoves(fc, solver.sol1);
-		DEBUG && console.log('after phase 1 (' + prettyMoves(solver.sol1) + '):\n', fc.toString(1));
+		debug && console.log('after phase 1 (' + prettyMoves(solver.sol1) + '):\n', fc.toString(1));
 		fc = applyMoves(fc, solver.sol2);
-		DEBUG && console.log('after phase 2 (' + prettyMoves(solver.sol2) + '):\n', fc.toString(1));
+		debug && console.log('after phase 2 (' + prettyMoves(solver.sol2) + '):\n', fc.toString(1));
 		fc = applyMoves(fc, solver.sol3);
-		DEBUG && console.log('after phase 3 (' + prettyMoves(solver.sol3) + '):\n', fc.toString(1));
+		debug && console.log('after phase 3 (' + prettyMoves(solver.sol3) + '):\n', fc.toString(1));
 
 		var facelets = fc.toFaceCube();
 		var isSolved = true;
@@ -882,7 +886,7 @@ var ftosolver = (function() {
 			console.log('error, FTO not solved!!!');
 		}
 
-		DEBUG && console.log(scramble, solution);
+		debug && console.log(scramble, solution);
 		return [
 			solver.sol1.length + solver.sol2.length + solver.sol3.length,
 			solver.sol1.length,
@@ -927,6 +931,9 @@ var ftosolver = (function() {
 		applyMoves: applyMoves,
 		move2str: move2str.slice(),
 		prettyMoves: prettyMoves,
-		testbench: DEBUG && testbench
+		testbench: debug && testbench
 	};
-})();
+}
+
+const ftosolver = createFtosolver();
+export default ftosolver;
