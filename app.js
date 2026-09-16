@@ -1,12 +1,18 @@
 import { ICONS } from './icons.js';
 import { generateRUFScramble } from './random-RUF.js';
 import { generateRUScramble } from './random-RU.js';
+import { fillSidebar, caseId } from './sidebar.js';
+import { loadSelection, saveSelection } from './selection.js';
+import { generateEPScramble, EPSidebar } from './EP.js';
 
 // ─── Mode registry ──────────────────────────────────────────────────────────
+// `sidebar` is optional. When present it returns a config for fillSidebar, the
+// menu button appears, and `generate` receives the selected case ids.
 
 const MODES = {
-    RUF:  { label: 'R U F', icon: ICONS.puzzle, generate: generateRUFScramble },
-    RU: { label: 'R U',   icon: ICONS.puzzle, generate: generateRUScramble },
+    RUF:   { label: 'R U F', icon: ICONS.puzzle, generate: generateRUFScramble },
+    RU:    { label: 'R U',   icon: ICONS.puzzle, generate: generateRUScramble },
+    EP: { label: 'EP', icon: ICONS.puzzle, generate: generateEPScramble, sidebar: EPSidebar },
 };
 
 const startDelay = 200;
@@ -18,8 +24,11 @@ const scrambleTextEl  = document.getElementById('scramble-text');
 const newScrambleBtn  = document.getElementById('new-scramble-btn');
 const dialEl          = document.getElementById('dial');
 const timerDisplayEl  = document.getElementById('timer-display');
+const sidebarEl       = document.getElementById('sidebar');
+const menuBtnEl       = document.getElementById('menu-btn');
 
 newScrambleBtn.innerHTML = ICONS.refresh;
+menuBtnEl.innerHTML = ICONS.menu;
 dialEl.style.setProperty('--charge-ms', `${startDelay}ms`);
 
 // ─── State ──────────────────────────────────────────────────────────────────
@@ -30,6 +39,9 @@ let phase         = 'idle'; // idle | holding | ready | running
 let timerStart    = null;
 let intervalId    = null;
 let holdTimeout   = null;
+
+const sidebarConfigs = {}; // mode -> config object (or null), built once
+const selections     = {}; // mode -> Set of selected case ids
 
 // ─── Rendering ──────────────────────────────────────────────────────────────
 
@@ -56,6 +68,68 @@ function renderScramble() {
     scrambleTextEl.textContent = scramble;
 }
 
+function renderMenuButton() {
+    menuBtnEl.classList.toggle('hidden', !sidebarConfig(mode));
+}
+
+// ─── Case selection ─────────────────────────────────────────────────────────
+
+function sidebarConfig(m) {
+    if (!(m in sidebarConfigs)) {
+        sidebarConfigs[m] = typeof MODES[m].sidebar === 'function' ? MODES[m].sidebar() : null;
+    }
+    return sidebarConfigs[m];
+}
+
+function selectionFor(m) {
+    const cfg = sidebarConfig(m);
+    if (!cfg) return null;
+    if (!selections[m]) {
+        selections[m] = loadSelection(m, (cfg.cases ?? []).map(caseId));
+    }
+    return selections[m];
+}
+
+function openSidebar() {
+    const cfg = sidebarConfig(mode);
+    if (!cfg) return;
+
+    fillSidebar(sidebarEl, {
+        ...cfg,
+        selected: selectionFor(mode),
+        onChange: (selected) => saveSelection(mode, selected),
+        onCollapse: closeSidebar,
+    });
+
+    sidebarEl.inert = false;
+    sidebarEl.classList.add('open');
+    document.body.classList.add('sidebar-open');
+}
+
+function closeSidebar() {
+    if (!sidebarEl.classList.contains('open')) return;
+
+    // A focused descendant can't be made inert; move focus out first.
+    if (sidebarEl.contains(document.activeElement)) {
+        document.activeElement.blur();
+    }
+
+    sidebarEl.classList.remove('open');
+    sidebarEl.inert = true;
+
+    let revealed = false;
+    const reveal = () => {
+        if (revealed) return;
+        revealed = true;
+        sidebarEl.removeEventListener('transitionend', onEnd);
+        document.body.classList.remove('sidebar-open');
+    };
+    const onEnd = (e) => { if (e.target === sidebarEl) reveal(); };
+
+    sidebarEl.addEventListener('transitionend', onEnd);
+    setTimeout(reveal, 350); // fallback if transitions are disabled/reduced-motion
+}
+
 function setDialPhase(next) {
     phase = next;
     dialEl.classList.remove('holding', 'charging', 'ready', 'running');
@@ -69,12 +143,15 @@ function setDialPhase(next) {
 function setMode(newMode) {
     if (newMode === mode) return;
     mode = newMode;
+    closeSidebar();
     renderModeButtons();
+    renderMenuButton();
     newScramble();
 }
 
-function newScramble() {
-    scramble = MODES[mode].generate();
+export function newScramble() {
+    const selected = selectionFor(mode);
+    scramble = selected ? MODES[mode].generate([...selected], scramble) : MODES[mode].generate(scramble);
     renderScramble();
 }
 
@@ -119,8 +196,11 @@ function stopTimer() {
 
 // ─── Input handling ─────────────────────────────────────────────────────────
 
+// Typing in the sidebar's search field must not drive the timer.
+const isTextInput = (el) => !!el?.closest?.('input, textarea, select, [contenteditable]');
+
 window.addEventListener('keydown', (e) => {
-    if (e.repeat) return;
+    if (e.repeat || isTextInput(e.target)) return;
 
     if (phase === 'running') {
         e.preventDefault();
@@ -134,7 +214,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('keyup', (e) => {
-    if (e.code !== 'Space') return;
+    if (e.code !== 'Space' || isTextInput(e.target)) return;
     e.preventDefault();
     endHold();
 });
@@ -149,9 +229,11 @@ window.addEventListener('pointerup', () => {
 });
 
 newScrambleBtn.addEventListener('click', newScramble);
+menuBtnEl.addEventListener('click', openSidebar);
 
 // ─── Init ───────────────────────────────────────────────────────────────────
 
 renderModeButtons();
+renderMenuButton();
 newScramble();
 timerDisplayEl.textContent = '0.00';
